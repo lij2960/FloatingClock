@@ -1,0 +1,138 @@
+# Android 构建文件
+*.apk
+*.ap_
+*.dex
+*.class
+*.so
+
+# Gradle 文件
+.gradle/
+gradle-wrapper.jar
+gradlew
+gradlew.bat
+!gradle-wrapper.jar
+
+# 构建目录
+build/
+!build/your-custom-dir/  # 如果需要保留特定构建目录内容
+captures/
+intermediates/
+outputs/
+reports/
+test-results/
+
+# Android Studio 项目文件
+.idea/
+*.iml
+local.properties
+*.iws
+*.ipr
+.cxx/
+.DS_Store
+
+# 缓存和临时文件
+*.log
+*.swp
+*.swo
+*~
+*#
+.#*
+.navigation/
+*.*~
+.~lock.*
+.fuse_hidden*
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+log/
+logs/
+
+# 键库文件
+*.jks
+*.keystore
+*.pfx
+*.p12
+
+# Firebase 和配置文件
+google-services.json
+google-services.xml
+google-services.gradle
+fabric.properties
+crashlytics.properties
+res/values/secrets.xml
+app/google-services.json
+
+# 调试文件
+proguard/
+proguard-project.txt
+proguard-rules.pro
+lint.xml
+lint-*
+lintVitalReleaseReport.html
+lintVitalReleaseGraph.png
+lintVitalReleaseGraph.dot
+
+# 测试相关
+/androidTest/
+/test/
+**/testResults/
+**/test-results/
+**/debug/
+**/release/
+
+# 缓存目录
+.cache/
+.metadata/
+.settings/
+
+# 版本控制忽略
+*.orig
+*.patch
+
+# 模块特定忽略
+**/app/build/
+**/lib/build/
+**/feature-*/build/
+
+# 性能分析文件
+*.hprof
+*.heap
+profiles/
+
+# 设备文件
+.externalNativeBuild/
+.externalNativeBuild.cmake/
+
+# Flutter（如果同时开发）
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.flutter/
+Flutter.podspec
+
+# 快速编辑忽略
+app/src/main/assets/
+!app/src/main/assets/.gitkeep
+
+app/src/main/res/raw/
+!app/src/main/res/raw/.gitkeep
+
+# 自定义忽略
+*.bak
+*.tmp
+*.backup
+
+# 第三方库
+libs/
+*.aar
+*.jar
+!libs/your-custom-lib.jar  # 如果需要保留特定库
+
+# Room 数据库架构
+**/migrations/*.java
+**/migrations/*.kt
+!**/migrations/*Test.java
+!**/migrations/*Test.kt

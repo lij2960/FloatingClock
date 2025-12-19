@@ -41,6 +41,7 @@ class FloatingClockService : Service() {
     private var targetSecond = 0
     private var timerRunnable: Runnable? = null
     private var isTimerSet = false
+    private lateinit var stepGroupManager: StepGroupManager
     
 
 
@@ -48,10 +49,9 @@ class FloatingClockService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        stepGroupManager = StepGroupManager(this)
         createFloatingClock()
         startTimeUpdates()
-        
-
     }
 
     private fun createFloatingClock() {
@@ -151,8 +151,67 @@ class FloatingClockService : Service() {
     }
     
     private fun toggleSelectMode() {
-        selectButton.text = "点击屏幕"
-        enablePositionSelection(false)
+        showAddClickDialog()
+    }
+    
+    private fun showAddClickDialog() {
+        val dialogLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#E0000000"))
+            setPadding(40, 40, 40, 40)
+        }
+        
+        val titleText = TextView(this).apply {
+            text = "添加点击"
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            textSize = 16f
+        }
+        
+        val addSingleBtn = Button(this).apply {
+            text = "添加单个点击"
+            setOnClickListener {
+                windowManager.removeView(dialogLayout)
+                selectButton.text = "点击屏幕"
+                enablePositionSelection(false)
+            }
+        }
+        
+        val loadGroupBtn = Button(this).apply {
+            text = "加载步骤分组"
+            setOnClickListener {
+                windowManager.removeView(dialogLayout)
+                showLoadGroupDialog()
+            }
+        }
+        
+        val cancelBtn = Button(this).apply {
+            text = "取消"
+            setOnClickListener {
+                windowManager.removeView(dialogLayout)
+            }
+        }
+        
+        dialogLayout.addView(titleText)
+        dialogLayout.addView(addSingleBtn)
+        dialogLayout.addView(loadGroupBtn)
+        dialogLayout.addView(cancelBtn)
+        
+        val dialogParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                WindowManager.LayoutParams.TYPE_PHONE
+            },
+            0,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.CENTER
+        }
+        
+        windowManager.addView(dialogLayout, dialogParams)
     }
     
     private fun toggleSwipeMode() {
@@ -419,7 +478,40 @@ class FloatingClockService : Service() {
         
 
         
-        val buttonLayout = LinearLayout(this).apply {
+        val buttonLayout1 = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        
+        val saveButton = Button(this).apply {
+            text = "保存分组"
+            setOnClickListener {
+                windowManager.removeView(dialogLayout)
+                showSaveGroupDialog()
+            }
+        }
+        
+        val loadButton = Button(this).apply {
+            text = "加载分组"
+            setOnClickListener {
+                windowManager.removeView(dialogLayout)
+                showLoadGroupDialog()
+            }
+        }
+        
+        val manageButton = Button(this).apply {
+            text = "管理分组"
+            setOnClickListener {
+                windowManager.removeView(dialogLayout)
+                showManageGroupDialog()
+            }
+        }
+        
+        buttonLayout1.addView(saveButton)
+        buttonLayout1.addView(loadButton)
+        buttonLayout1.addView(manageButton)
+        
+        val buttonLayout2 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
         }
@@ -440,12 +532,13 @@ class FloatingClockService : Service() {
             }
         }
         
-        buttonLayout.addView(clearButton)
-        buttonLayout.addView(closeButton)
+        buttonLayout2.addView(clearButton)
+        buttonLayout2.addView(closeButton)
         
         dialogLayout.addView(titleText)
         dialogLayout.addView(stepsScrollView)
-        dialogLayout.addView(buttonLayout)
+        dialogLayout.addView(buttonLayout1)
+        dialogLayout.addView(buttonLayout2)
         
         val dialogParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -789,7 +882,237 @@ class FloatingClockService : Service() {
         windowManager.addView(dialogLayout, dialogParams)
     }
     
-
+    private fun showSaveGroupDialog() {
+        val dialogLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#E0000000"))
+            setPadding(40, 40, 40, 40)
+        }
+        
+        val titleText = TextView(this).apply {
+            text = "保存步骤分组"
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            textSize = 16f
+        }
+        
+        val nameInput = android.widget.EditText(this).apply {
+            hint = "输入分组名称"
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.GRAY)
+            setBackgroundColor(Color.parseColor("#40FFFFFF"))
+            setPadding(20, 20, 20, 20)
+        }
+        
+        val buttonLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        
+        val saveBtn = Button(this).apply {
+            text = "保存"
+            setOnClickListener {
+                val name = nameInput.text.toString().trim()
+                if (name.isNotEmpty()) {
+                    stepGroupManager.saveStepGroup(name, AutoClickService.clickSteps)
+                    windowManager.removeView(dialogLayout)
+                    showStepsDialog()
+                } else {
+                    nameInput.error = "请输入分组名称"
+                }
+            }
+        }
+        
+        val cancelBtn = Button(this).apply {
+            text = "取消"
+            setOnClickListener {
+                windowManager.removeView(dialogLayout)
+                showStepsDialog()
+            }
+        }
+        
+        buttonLayout.addView(saveBtn)
+        buttonLayout.addView(cancelBtn)
+        
+        dialogLayout.addView(titleText)
+        dialogLayout.addView(nameInput)
+        dialogLayout.addView(buttonLayout)
+        
+        val dialogParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                WindowManager.LayoutParams.TYPE_PHONE
+            },
+            0,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.CENTER
+        }
+        
+        windowManager.addView(dialogLayout, dialogParams)
+    }
+    
+    private fun showLoadGroupDialog() {
+        val dialogLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#E0000000"))
+            setPadding(40, 40, 40, 40)
+        }
+        
+        val titleText = TextView(this).apply {
+            text = "加载步骤分组"
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            textSize = 16f
+        }
+        
+        val scrollView = android.widget.ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                300
+            )
+        }
+        
+        val groupContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        
+        val groupNames = stepGroupManager.getAllGroupNames()
+        groupNames.forEach { name ->
+            val groupButton = Button(this).apply {
+                text = name
+                setOnClickListener {
+                    val group = stepGroupManager.loadStepGroup(name)
+                    if (group != null) {
+                        AutoClickService.clickSteps.clear()
+                        AutoClickService.clickSteps.addAll(group.steps)
+                        updateStepsButton()
+                        windowManager.removeView(dialogLayout)
+                        showStepsDialog()
+                    }
+                }
+            }
+            groupContainer.addView(groupButton)
+        }
+        
+        scrollView.addView(groupContainer)
+        
+        val closeBtn = Button(this).apply {
+            text = "关闭"
+            setOnClickListener {
+                windowManager.removeView(dialogLayout)
+                showStepsDialog()
+            }
+        }
+        
+        dialogLayout.addView(titleText)
+        dialogLayout.addView(scrollView)
+        dialogLayout.addView(closeBtn)
+        
+        val dialogParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                WindowManager.LayoutParams.TYPE_PHONE
+            },
+            0,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.CENTER
+        }
+        
+        windowManager.addView(dialogLayout, dialogParams)
+    }
+    
+    private fun showManageGroupDialog() {
+        val dialogLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.parseColor("#E0000000"))
+            setPadding(40, 40, 40, 40)
+        }
+        
+        val titleText = TextView(this).apply {
+            text = "管理步骤分组"
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            textSize = 16f
+        }
+        
+        val scrollView = android.widget.ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                300
+            )
+        }
+        
+        val groupContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        
+        val groupNames = stepGroupManager.getAllGroupNames()
+        groupNames.forEach { name ->
+            val groupLayout = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setPadding(0, 10, 0, 10)
+            }
+            
+            val nameText = TextView(this).apply {
+                text = name
+                setTextColor(Color.WHITE)
+                textSize = 14f
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            
+            val deleteBtn = Button(this).apply {
+                text = "删除"
+                textSize = 10f
+                setOnClickListener {
+                    stepGroupManager.deleteStepGroup(name)
+                    windowManager.removeView(dialogLayout)
+                    showManageGroupDialog()
+                }
+            }
+            
+            groupLayout.addView(nameText)
+            groupLayout.addView(deleteBtn)
+            groupContainer.addView(groupLayout)
+        }
+        
+        scrollView.addView(groupContainer)
+        
+        val closeBtn = Button(this).apply {
+            text = "关闭"
+            setOnClickListener {
+                windowManager.removeView(dialogLayout)
+                showStepsDialog()
+            }
+        }
+        
+        dialogLayout.addView(titleText)
+        dialogLayout.addView(scrollView)
+        dialogLayout.addView(closeBtn)
+        
+        val dialogParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                WindowManager.LayoutParams.TYPE_PHONE
+            },
+            0,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.CENTER
+        }
+        
+        windowManager.addView(dialogLayout, dialogParams)
+    }
 
     private fun makeDraggable(params: WindowManager.LayoutParams) {
         var initialX = 0
